@@ -82,20 +82,18 @@ function _interface() {
         events = ev;
     }
     
-    // TODO: BUILD A WAITING FUNCTION TO START PLAYBACK AFTER LOADED
-    //        REMOVE THE SETTIMEOUT
-    
-    // force_playback
-    // params : none
-    // functions: creates a crossbrowser listener to play the music
-    // returns : nothing
-//    local.force_playback  = function() {
-        
-//    }
-    
-    
     // public
     
+    // make_friends 
+    // params: visualzer is the visualizing drawing object object to call the
+    //                data function
+    // functions : takes in the object and sets the parent value of 
+    //             visualizer to the injected object
+    // returns : none
+    local.make_friends = function(visualzer) {
+        p.set_setting('visualizer', visualzer);
+    }
+
     // init
     // param: none
     // functions calls all the necessary functionality to create an easier api
@@ -160,8 +158,7 @@ function _interface() {
     //              visulization.js
     // returns : none
     local.visualize = function(audio_data) {
-        console.log(audio_data);
-       
+
     }
     
         

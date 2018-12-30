@@ -2,39 +2,45 @@
 
 function main() {
     
-    var visualizer = new _visualizer();
+    // create the objects
+    var visualizer_set_up = new _visualizer_set_up();
     
     var intfce = new _interface();
     
-    var visualizer_set_up = new _visualizer_set_up();
+    var visualizer = new _visualizer();
     
-    visualizer.init(intfce.get_song_title());
+    // initiate the objects
+    visualizer_set_up.init(intfce.get_song_title());
+    
+    intfce.init(visualizer_set_up.get_setting('audio_element'), events);
+    
+    visualizer.init();
 
-    intfce.init(visualizer.get_setting('audio_element'), events);
+    // handshake
+    visualizer_set_up.make_friends(intfce);
     
-    visualizer.make_friends(intfce);
+    intfce.make_friends(visualizer);
     
-    console.log(visualizer.get_setting("audio_element"));
-
-    visualizer.get_setting('audio_element').onplay = function() {
+    // add events
+    visualizer_set_up.get_setting('audio_element').onplay = function() {
 
          // this line is the player pressing audio        
-          visualizer.get_setting("audio_context").resume();
-          visualizer.get_setting('audio_element').play();
+          visualizer_set_up.get_setting("audio_context").resume();
+          visualizer_set_up.get_setting('audio_element').play();
 
           // i think this line is what grabs the interface        
-          visualizer.play();
+          visualizer_set_up.play();
           
     }
 
     events.add(intfce.get_dom('play_button'), 'click', function() {
 
          // this line is the player pressing audio        
-          visualizer.get_setting("audio_context").resume();
-          visualizer.get_setting('audio_element').play();
+          visualizer_set_up.get_setting("audio_context").resume();
+          visualizer_set_up.get_setting('audio_element').play();
 
           // i think this line is what grabs the interface        
-          visualizer.play();
+          visualizer_set_up.play();
 
     })
     

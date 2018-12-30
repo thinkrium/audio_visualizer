@@ -61,16 +61,39 @@
   
   // hook block view
   function audio_visualizer_block_view($delta) {
-      return array("content" => array(
-          "#markup" => "<div id='audio_visualizer_block'></div>",
-          "#attached" => array(
+      
+      $markup = "<div id='audio_visualizer_block'></div>";
+      
+      $js = array(
                drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/parent.js", array("scope" => "footer") ),
                drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/events.js",array("scope" => "footer")),
-               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/audio_visualizer.js",array("scope" => "footer")),
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer_set_up.js",array("scope" => "footer")),
                drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/interface.js",array("scope" => "footer")),
                drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/main.js",array("scope" => "footer")),
+            );
+      
+
+            $markup .= determine_visualizer_type();
+          
+            // we call this after the loop because we want access to the 
+            // version of visualization in the ancestor
+            array_push($js, drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer.js",array("scope" => "footer")));           
+
+            // call this last so that all modules can be accounted for        
+            array_push($js, drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/main.js",array("scope" => "footer"))); 
+             
+      
+      /// switched markup to a dynamic string to allow for decision in js
+      return array("content" => array(
+          "#markup" => $markup,
+          "#attached" => array(
+               'js' => $js,
+               'css' => array(
+                   drupal_add_css(drupal_get_path("module", "audio_visualizer") . "/css/visualization.css"),
+                   ),
+                ),
             ),
-      ));
+      );
   }
 
   
@@ -184,9 +207,11 @@
         
         $page_elements = "<div id='audio_visualizer_test_page_container'></div>";
 
-          $page_elements .= generate_player(generate_track_path($result['testing_audio_filename'], "test"));
+        $page_elements .= generate_player(generate_track_path($result['testing_audio_filename'], "test"));
+        
+        $page_elements .= determine_visualizer_type();
 
-     return ($result) ? $page_elements : "There is not yet a track to visualize!";  
+        return ($result) ? $page_elements : "There is not yet a track to visualize!";  
   }
   
   // name       : audio_visualizer_get_js 
@@ -209,12 +234,10 @@
           current_path() == "admin/config/media/audio_visualizer/test"
           )  {    
               
-          $vis_types = get_visualization_types("implemented");
-      
   
           drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/parent.js", array("scope" => "footer") );
           drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/events.js",array("scope" => "footer"));
-          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/audio_visualizer.js",array("scope" => "footer"));
+          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer_set_up.js",array("scope" => "footer"));
           drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/interface.js",array("scope" => "footer"));
           
           
@@ -229,7 +252,7 @@
           
             // we call this after the loop because we want access to the 
             // version of visualization in the ancestor
-            drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer_set_up.js",array("scope" => "footer"));           
+            drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer.js",array("scope" => "footer"));           
 
             // call this last so that all modules can be accounted for        
             drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/main.js",array("scope" => "footer")); 
@@ -489,39 +512,7 @@
    function generate_player($title) {
          
          $player = '';
-/*       
-         $player .=  "<div id='testing_audio_vis_file'>";
-         $player .=     "<span class='current_time_container'>";
-         $player .=        "<div class='current_time'></div>";
-         $player .=     "</span>";
-         $player .=     "<div class='play_container'>";
-         $player .=        "<div class='play'></div>";
-         $player .=        "<div class='pause_container'>";
-         $player .=             "<div class='pause_bar one'></div>";
-         $player .=             "<div class='pause_bar two'></div>";
-         $player .=        "</div>";
-         $player .=    "</div>";
-         $player .=    "<div class='volume_container'>";
-         $player .=        "<div class='current_volume_container'>";
-         $player .=            "<div class='speaker_container'>";
-         $player .=                "<div class='speaker_base'></div>";
-         $player .=                "<div class='speaker_cone'></div>";
-         $player .=                "<div class='volume_arc_container'>";
-         $player .=                    "<div class='volume_arc one'></div>";
-         $player .=                    "<div class='volume_arc two'></div>";
-         $player .=                    "<div class='volume_arc three'></div>";
-         $player .=               "</div>";
-         $player .=            "</div>";
-         $player .=           "<div class='current_volume_scrubber_container'>";
-         $player .=                "<div class='possible_volume'>"; 
-         $player .=                   "<div class='current_volume'></div>";
-         $player .=                "</div>";
-         $player .=           "</div>";
-         $player .=        "</div>";
-         $player .=    "</div>";
-         $player .= "</div>";
-         */
-         
+
          $player .= "<audio id='testing_audio_vis_file' controls>";
          $player .=     "<source src=$title type='audio/mp3'/>";
          $player .= "</audio>";
@@ -544,4 +535,24 @@
         return ($context == "live") ? $live_path  : $test_path;
     }
     
+    // name      : determine_visualizer_type
+    // param     : none
+    // functions : it loops through the potential visualization types to return 
+    //                the appropriate markup
+    // returns   : string markup
+    function determine_visualizer_type() {
+
+        $vis_types = get_visualization_types("implemented");
+
+        // iterates through the diff display types        
+        foreach($vis_types as $type) {
+            if($type == "lines") {
+
+                $markup = "<div class='visualizer_hide_me' id='visualization_type'>$type</div>";
+            }
+        }
+        
+        return $markup;
+    }
+          
 

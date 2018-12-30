@@ -1,0 +1,547 @@
+  <?php 
+
+    // hook menu
+    /*
+          implements hook menu
+    */
+
+    function audio_visualizer_menu() {
+
+        $menu_item = array(); 
+
+        $menu_item['admin/config/media/audio_visualizer'] = array(
+             'title' => 'Audio Visualizer Config',
+             'page callback' => 'drupal_get_form',
+             'page arguments' => array('audio_visualizer_config'),
+             "access arguments" => array('audio_visualizer_config'),
+         );
+         
+         $menu_item["admin/config/media/audio_visualizer/test"] = array (
+             'title' => 'Audio Visualizer Test',
+             'page callback' => "audio_visualizer_test_page",
+             "access arguments" => array('audio_visualizer_config'),
+              );
+
+         return $menu_item;
+
+    }
+
+    /// hook_perm
+  function audio_visualizer_permission() {
+    return array(
+       'audio_visualizer_config' => array(
+          'title' => t("Configure the Audio Visualizer"),
+          "description" => t("Allows you to pick options for your audio visualizer"),
+       ),
+    );
+  }
+  
+  function audio_visualizer_field_formatter_info() {
+        return array(
+          "audio_visualizer" => array(           
+                'label' => t ('Audio Visualizer Formatter'),
+                'field types' => array( 'text'),
+                "settings" => array(
+                   'color' => 'red',
+                ),
+            )    
+       );
+  }
+  
+  // hook block info
+  function audio_visualizer_block_info() {
+      
+     return array(
+           'audio visualizer' => array(
+               "info" => t("Audio Visualizer"),
+               'cache' => DRUPAL_NO_CACHE,
+            ),
+         );
+  }
+  
+  // hook block view
+  function audio_visualizer_block_view($delta) {
+      return array("content" => array(
+          "#markup" => "<div id='audio_visualizer_block'></div>",
+          "#attached" => array(
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/parent.js", array("scope" => "footer") ),
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/events.js",array("scope" => "footer")),
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/audio_visualizer.js",array("scope" => "footer")),
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/interface.js",array("scope" => "footer")),
+               drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/main.js",array("scope" => "footer")),
+            ),
+      ));
+  }
+
+  
+  function audio_visualizer_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+ 
+      return array();
+  }
+
+
+  function audio_visualizer_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+       $settings = $display['settings'];
+       $element = array();
+
+       if ($display['type'] == 'audio_visualizer_formatter') {
+           foreach ($items as $delta => $item) {
+              $element[$delta] = array('#markup' => $item['value']);
+          }
+        }
+
+     return $element;
+   }
+
+
+ function audio_visualizer_config() {
+     
+     // returns the most recent entry
+     $result = db_select("audio_visualizer_config", "config")->fields("config")->orderBy('audio_vis_id', "desc")->execute()->fetchAssoc();
+     
+     $page_elements = array();
+
+     if($result['testing_audio_filename']) {
+         $page_elements["hidden_conditional_filename"] = array(
+             "#type" => "hidden",
+             "#value" => $result['testing_audio_filename'],
+         );
+         
+     }
+     
+     $file_value_description = "Only Mp3's will be allowed.";
+
+     $page_elements["audio_submission"] = array(
+        "#type" => "file",
+        "#title" => t("Audio file for testing" ),  
+        "#description" => $file_value_description,
+        
+    );
+    
+    if($result['testing_audio_filename']) { 
+        
+        $page_elements["current_song"] = array(
+            "#prefix" => "<div id='audio_visualizer_test_song_title'>",
+            "#markup" => t("Currently using " . $result['testing_audio_filename'] . " as your test song"),
+            "#suffix" => "</div>",
+        );
+    }
+
+    $page_elements["visualizer_type"] = array(
+        "#type" => "select",
+        "#options" => get_visualization_types("config"),
+        "#value" => $result["visualization_type"],
+        "#title" => t("Type of visualizer to show"),
+    );
+    
+    $page_elements["pages_its_on"] = array(
+        "#type"=>"textarea",
+        "#title"=>t("Pages"),
+        "#description" => 
+             t("List the pages you can see the audio visualizer on (It will default to the audio nodes )"),
+        "#value" => $result["applied_pages"],
+    );
+    
+
+    $page_elements['submit'] = array(
+       '#type' => 'submit',    
+       '#value' => t("configure"),
+    );
+    
+    $page_elements['#validate'][] = "audio_visualizer_form_validate";
+    $page_elements['#submit'][] = "audio_visualizer_form_submit";
+     
+   return $page_elements;
+} 
+
+  // adding js to the nodes based on config page
+  function audio_visualizer_preprocess_node(&$variables) {
+    
+       $result = db_select("audio_visualizer_config", "config")->fields("config")->orderBy('audio_vis_id', "desc")->execute()->fetchAssoc();
+      
+       audio_visualizer_get_js($result["applied_pages"], $result['visualization_type'], $result["display_audio_track"]);
+  }
+
+
+  function audio_visualizer_test_page() {
+      
+           // returns the most recent entry
+     $result = db_select("audio_visualizer_config", "config")->fields("config")->orderBy('audio_vis_id', "desc")->execute()->fetchAssoc();
+      
+        drupal_add_css(drupal_get_path("module", "audio_visualizer") . "/css/visualization.css");         
+
+      
+       $result = db_select("audio_visualizer_config", "config")->fields("config")->orderBy('audio_vis_id', "desc")->execute()->fetchAssoc();
+
+
+       audio_visualizer_get_js($result["applied_pages"], $result['visualization_type'], $result["display_audio_track"]);
+  
+       
+  
+      // generate the track path using the testing context.... see function summary
+      
+        $page_elements = "<div id='audio_vis_track_title'>" . generate_track_path($result['testing_audio_filename'], "test") . "</div>";
+        
+        $page_elements = "<div id='audio_visualizer_test_page_container'></div>";
+
+          $page_elements .= generate_player(generate_track_path($result['testing_audio_filename'], "test"));
+
+     return ($result) ? $page_elements : "There is not yet a track to visualize!";  
+  }
+  
+  // name       : audio_visualizer_get_js 
+  // params     : page is an array holding the current allowed pages for the
+  //                 visualizer
+  // params     : type is the current type of visualizer prefered 
+  // params     : display_track_controls is a bool represented as an int
+  //               that determins if track should be displayed
+  // functions  : it will take in the page array to sort out if the js is in 
+  //                 the page and also use the type context to add appropriate
+  //                 js for which visualizer it needs to include.
+  //                 It will always include the base files 
+  // returns    : nothing
+  function audio_visualizer_get_js($page, $type, $display_track_controls) {
+
+      // returns the most recent entry
+       if(
+          in_array(current_path(), $page) 
+               || 
+          current_path() == "admin/config/media/audio_visualizer/test"
+          )  {    
+              
+          $vis_types = get_visualization_types("implemented");
+      
+  
+          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/parent.js", array("scope" => "footer") );
+          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/events.js",array("scope" => "footer"));
+          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/audio_visualizer.js",array("scope" => "footer"));
+          drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/interface.js",array("scope" => "footer"));
+          
+          
+
+           // iterates through the diff display types        
+            foreach($vis_types as $type) {
+                if($type == "lines") {
+                    drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/standard.js",array("scope" => "footer")); 
+                }
+            }
+          
+          
+            // we call this after the loop because we want access to the 
+            // version of visualization in the ancestor
+            drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/visualizer_set_up.js",array("scope" => "footer"));           
+
+            // call this last so that all modules can be accounted for        
+            drupal_add_js(drupal_get_path("module", "audio_visualizer") . "/js/main.js",array("scope" => "footer")); 
+       
+            
+       
+
+        }
+  }
+  
+  function default_visualizer_type_chosen() {
+      // to add a functionality for db queries
+      return "3d";
+  }
+  
+  // update the pages that are listed by default to include the audio nodes
+   function default_pages_its_on() {
+       return t("node/*");  
+   }
+
+   // creates a validating function for the config form
+   
+   function audio_visualizer_form_validate($form_id, &$form_state) {
+        
+        $valid_path_index = 0;
+
+        $valid_file = file_save_upload("audio_submission", ["file_validate_extensions" => "mp3"], 'temporary://', FILE_EXISTS_REPLACE );
+
+        $pages = preg_split("/[\s\n\r]+/", $form_state['input']['pages_its_on']);
+
+        if($valid_file != NULL) {
+            
+            $mime_type = explode("audio/", $valid_file->filemime)[1];
+
+            if($mime_type == "mpeg" || $mime_type == "mp3" ) {
+                $form_state["valid_file"] = $valid_file;
+            }
+            else {
+              
+                drupal_set_message(t("Currently this module only supports MP3."), 'error');
+                form_set_error("audio_submission", t("Currently this module only supports MP3."));
+           }
+        }
+          
+
+        foreach($pages as $page) {
+            
+            if(!empty($page)) {
+                if(!path_exists($page, path_contains_wildcard($page))) {
+
+                /// as far as I can think of you dont need any of the admin facing
+                /// paths querying the menu router gives you a significantly larger 
+                /// dataset so if it needs it i will add that
+         
+                /// $wildCards = db_select('menu_router', 'mr')->fields('mr', array('path'));
+              
+
+                  form_set_error("pages_its_on", t("Sorry $page is not an appropriate path."));
+               
+                   }
+                   $valid_path_index++;
+              }
+              
+          }
+          
+          if($valid_path_index == 0) {
+             drupal_set_message("There are no valid visualization paths. Is that what you wanted?", "warning");   
+          }
+   }
+
+   // name : audio_visualizer_form_submit
+   // parameter : form_id is the form id
+   // parameter : form_state holds the information about the state of the form 
+   //                   after submit
+   // returns   : none
+   function audio_visualizer_form_submit($form_id, $form_state) {
+    
+         $input = $form_state["input"];
+         
+         $values = $form_state["values"];
+         
+         $filename = '';
+
+         // moves the file from temporary1 to the appropriate uri
+          if(isset($form_state['valid_file'])) {
+              
+              // the parameter in the module is the context from which it was called
+              
+              clean_directory();
+              
+              file_move($form_state['valid_file'], "public://audio_visualizer/config", FILE_EXISTS_REPLACE);
+
+              $filename = $form_state["valid_file"]->filename;
+
+          }
+          else {
+              $filename = $form_state["input"]["hidden_conditional_filename"];
+          }
+          try {
+            $result = db_insert('audio_visualizer_config')
+               ->fields(
+                 array(
+                  "testing_audio_filename" => $filename,
+                  "visualization_type" => $input["visualizer_type"],
+                  'applied_pages' => $input["pages_its_on"],
+                 )
+            );
+
+             $result->execute();
+
+            drupal_set_message("Your configuration has been saved.");
+         }
+         catch(Exception $e) {
+             drupal_set_message("Something went wrong", "error");
+         }
+   }
+   
+   // name      : path_contains_wildcard
+   // parameter : path holds the path and process it by checking for
+   //              parameterized arguments
+   // functions : if the argument is found than processes the string by checking
+   //              just for the existence of the regex string and than breaking
+   //              up the string into an array and checking for elements with a
+   //              wild card 
+   // returns   : bool
+   function path_contains_wildcard($path) {
+       
+        $regex_results;
+
+        $wildCards_pattern = "/[*%]+/";
+        $replacement_pattern = "/[0-9a-zA-Z]+/";
+
+        preg_match($wildCards_pattern, $path, $regex_results);
+        
+        return (sizeof($regex_results) > 0) ? true : false;
+   }
+
+   // name      : path_exists
+   // parameter : path is the path or array of paths to test
+   // parameter : wildcard s a boolean if the path contains a wildcard
+   // functions : checks for the existence of a path in the system
+   //              and return false if not true if path
+   // returns   : boolean
+   function path_exists($path, $wildcard_exists) {
+       
+       $select_statement = '';
+
+       if($wildcard_exists) {
+                
+            $processed_path = preg_replace("/[*%]+/", "%", $path);
+            
+            $select_statement = "select alias, source from {url_alias} where alias like '$processed_path' or source like '$processed_path'";
+        }
+        else {
+          $select_statement = "select alias, source from {url_alias} where alias='$path' or source='$path'";               
+        }
+              
+        $public = db_query($select_statement);
+               
+        
+        // returns true if the query returns an array larger than 0
+        // else returns false;
+        return (sizeof($public->fetchAll()) == 0) ? false : true;
+   }
+
+   function test_sub() {
+       return (true ) ? true : false;
+   }
+   
+   
+   
+
+   // remove_config_director
+   // parameter: None
+   // function: attempts to remove the config audio files and while setting
+   //           while setting a message for the user to see what was deleted
+   //
+   //           wraps a try block 
+   //           checks if the parent directory audio_visualizer exists
+   //           checks if the parent directory config exists inside audio_vis 
+   //           scans the directory for files
+   //           iterates through the directory and deletes the files
+   //           if that works than messages that they are deleted
+   //           deletes both the parent directories
+   //           if all that fails than messages the watchdog for errors
+   
+   function clean_directory() {
+       
+
+       // check for the audio visualizer directory and remove its contents including the children
+       try {
+     
+           if(file_exists("sites/default/files/audio_visualizer")) {
+       
+               if(file_exists("sites/default/files/audio_visualizer/config")) {
+               
+                   $files = scandir("sites/default/files/audio_visualizer/config");
+                   
+                   
+                   if(!empty($files) ) {
+                        foreach($files as $file) {
+
+                             if ($file != "." && $file != ".." ) {
+                             
+                                $deleted = unlink("sites/default/files/audio_visualizer/config/" . $file);
+                             
+                                 if($deleted) {
+                                      drupal_set_message("Deleted $file from your configuration directory");
+                                 } 
+                                
+                             }
+                             
+                        }
+                    }
+                    
+                }
+                
+            }
+            
+         }
+         catch(Exception $e) {
+         
+               drupal_set_error("Something horribly wrong has happened and it didn't work. Check the module file");
+                watchdog( $e );
+         }
+   }
+   
+   // name : get_visualization_types
+   // param: context is the string which determins if it is config
+   //           or implement
+   // function : it looks at the context param and if it is config it will
+   //           return an associative array of key values.
+   //            else  if it is defined it will jus tpull out the keys
+   // return : visualization_types
+   function get_visualization_types($context) {
+
+         $visualization_types = array(
+                "3d" => t("3d"), 
+                "lines" => t("Lines"),
+                "circles" => t("Circles"),
+                "pixels" => t("Pixels")
+             );
+             
+        if ($context == "config") {
+            
+             return  $visualization_types; 
+        }
+        else {
+             return array_keys($visualization_types); 
+        }
+   }
+   
+   // name : generate_player
+   // params : title is the song title
+   // functions : creates a string that represents an audio player
+   // returns   : the string
+   function generate_player($title) {
+         
+         $player = '';
+/*       
+         $player .=  "<div id='testing_audio_vis_file'>";
+         $player .=     "<span class='current_time_container'>";
+         $player .=        "<div class='current_time'></div>";
+         $player .=     "</span>";
+         $player .=     "<div class='play_container'>";
+         $player .=        "<div class='play'></div>";
+         $player .=        "<div class='pause_container'>";
+         $player .=             "<div class='pause_bar one'></div>";
+         $player .=             "<div class='pause_bar two'></div>";
+         $player .=        "</div>";
+         $player .=    "</div>";
+         $player .=    "<div class='volume_container'>";
+         $player .=        "<div class='current_volume_container'>";
+         $player .=            "<div class='speaker_container'>";
+         $player .=                "<div class='speaker_base'></div>";
+         $player .=                "<div class='speaker_cone'></div>";
+         $player .=                "<div class='volume_arc_container'>";
+         $player .=                    "<div class='volume_arc one'></div>";
+         $player .=                    "<div class='volume_arc two'></div>";
+         $player .=                    "<div class='volume_arc three'></div>";
+         $player .=               "</div>";
+         $player .=            "</div>";
+         $player .=           "<div class='current_volume_scrubber_container'>";
+         $player .=                "<div class='possible_volume'>"; 
+         $player .=                   "<div class='current_volume'></div>";
+         $player .=                "</div>";
+         $player .=           "</div>";
+         $player .=        "</div>";
+         $player .=    "</div>";
+         $player .= "</div>";
+         */
+         
+         $player .= "<audio id='testing_audio_vis_file' controls>";
+         $player .=     "<source src=$title type='audio/mp3'/>";
+         $player .= "</audio>";
+         
+         return $player;
+    }
+    
+    // name : generate_track_path
+    // param : song name is the song name given from the query in the page
+    // param : context is the string representing either testing or live ...
+    //             defaults to live
+    // function : returns string combining path with title
+    // returns path
+    function generate_track_path($title, $context = "live") {
+        
+        $live_path = $GLOBALS['base_url'] . "/sites/all/still gotta figure it out";
+        
+        $test_path = $GLOBALS['base_url'] . "/sites/default/files/audio_visualizer/config/" . $title;
+               
+        return ($context == "live") ? $live_path  : $test_path;
+    }
+    
+

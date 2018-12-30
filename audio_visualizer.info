@@ -1,0 +1,10 @@
+name=Audio Visualizer
+description = This is a javascript Audio Visualizer for Drupal
+core = 7.x
+
+package = Audio Visualizer
+
+dependencies[] = file
+
+
+configure = admin/config/audio_visualizer_config

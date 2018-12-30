@@ -1,0 +1,167 @@
+#audio_vis_track_title {
+    display: none;
+}
+
+#play_visualization {
+    color: red;
+    border: 1px solid #000;
+    float: left;
+}
+
+#audio_visualized_elem {
+}
+/*
+#testing_audio_vis_file, #testing_audio_vis_file * {
+    position: relative;
+    display: inline-block;
+}
+ 
+
+#testing_audio_vis_file {
+    background: linear-gradient(to bottom, #cccccc, #9c9c9c);
+    height: 50px;
+    width: 190px;
+    clear: both;
+}
+
+#testing_audio_vis_file .current_time_container {
+    background: black;
+    height: 10px;
+    width: 100px;
+    margin-left: 10px;
+    margin-bottom: 1px;
+    clear: both;
+}
+
+#testing_audio_vis_file .current_time {
+    background: linear-gradient(to bottom, #cccccc, #bdbcbc);;
+    height : 10px;
+    width: 0%;
+    position: absolute;
+}
+
+#testing_audio_vis_file .play_container {
+    height: 25px;
+    width: 25px;
+    margin-left: 5px;
+    margin-bottom: -3px;
+    overflow: auto;
+    
+}
+
+#testing_audio_vis_file .play_container .play {
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 12px solid #d8d8d8;
+    margin-top: 3px;
+}
+
+#testing_audio_vis_file .play_container .pause_container {
+    height: 25px;
+    width: 25px;
+    margin-top: 5px;
+    overflow: auto;
+    margin-bottom: -7px;
+/*    display: none; *//*
+}
+
+#testing_audio_vis_file .play_container .pause_container .pause_bar.two {
+  float: left;    
+}
+
+#testing_audio_vis_file .play_container .pause_container .pause_bar.one,
+#testing_audio_vis_file .play_container .pause_container .pause_bar.two {
+    height: 20px;
+    width: 5px;
+    background: black;
+    border-radius: 10px;
+    margin: 2px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .speaker_base {
+    width: 15px;
+    height: 15px;
+    background: #d8d8d8;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .speaker_cone {
+    width: 0;
+    height: 0;
+    border-top: 11px solid transparent;
+    border-bottom: 11px solid transparent;
+    border-right: 20px solid #d8d8d8;
+    margin-top: 8px;
+    margin-left: -10px;
+    margin-bottom: 0px;
+    border-radius: 5px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc_container {
+    
+    margin-left: -17px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.one {
+    height: 13px;
+    margin-bottom: 2px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.two { 
+    height: 17px;
+    margin-bottom: 0px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.three {
+    height: 23px;
+    margin-bottom: -2px;
+}
+
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.one ,
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.two ,
+#testing_audio_vis_file .volume_container .speaker_container .volume_arc.three {
+    width: 20px;
+    border: solid 2px #d8d8d8;
+    border-color: transparent #d8d8d8 transparent transparent;
+    border-radius: 20px 20px;
+    margin-right: -20px;
+}    
+
+#testing_audio_vis_file .current_volume_scrubber_container { 
+    height: 30px;
+    width: 100px;
+    background: #bdbdbd;
+    border: 2px solid #a7a7a7;
+    box-shadow: 0px 0px 5px grey;
+    -webkit-box-shadow: 0px 0px 5px grey;
+    -o-box-shadow: 0px 0px 5px grey;
+    -moz-box-shadow: 0px 0px 5px grey;
+    overflow: auto;
+    display: none;
+    position: absolute;
+}
+    
+#testing_audio_vis_file .current_volume_scrubber_container .possible_volume { 
+    width: 80%;
+    height: 4px;
+    background: black;
+    margin: auto;
+    display: block;
+    margin-top: 13px;
+}
+
+#testing_audio_vis_file .current_volume_scrubber_container .current_volume { 
+    height: 4px;
+    width: 0%;
+    background: linear-gradient(to bottom, #cccccc, #9c9c9c);
+    display: inherit;
+}
+
+#testing_audio_vis_file .volume_container {
+    top: 3px;
+    margin-left: -6px;
+}
+*/

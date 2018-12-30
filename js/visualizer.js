@@ -7,7 +7,9 @@ function _visualizer() {
     
     var local = this;
     
-    var config  = {};
+    var config  = {
+        visualizer : '',
+    };
     
     var dom     = {};
     
@@ -21,6 +23,8 @@ function _visualizer() {
         
         dom['audio_visualizer_test_page_container'] = document.getElementById('audio_visualizer_test_page_container');
 
+        config['visualization_type'] = document.getElementById('visualization_type').innerText;
+
     }
     
     // name      : set_container_size 
@@ -31,7 +35,9 @@ function _visualizer() {
     var set_container_size = function(context) {
 
        if(context == "block") {
-        
+          
+           let block_dimensions = {};
+          
             // let keyword keeps scope
             let temp_block_dimensions = window.getComputedStyle(dom.audio_visualizer_block);
            
@@ -42,6 +48,8 @@ function _visualizer() {
         
        }
        else if (context == 'page') {
+
+           let page_dimensions = {};
 
            let temp_page_dimensions = window.getComputedStyle(dom.audio_visualizer_test_page_container);
            
@@ -68,6 +76,8 @@ function _visualizer() {
         if(dom.audio_visualizer_block) {
             set_container_size('block');
         }
+        
+        
     }
     
     
@@ -76,7 +86,18 @@ function _visualizer() {
     // functions : takes in the data and calls the correct function or class
     // returns   : none
     local.draw_visualization = function(data) {
-        
+        if(config.visualization_type == "lines") {
+            config.visualizer['standard'] = new _standard();
+            
+            
+           ///////////////////
+           //// need to put this in a function
+           ///////////////////
+            config.visualizer.standard.create_markup(dom.audio_visualizer_block);
+            ///////////////////
+            ///////////////////
+            ///////////////////
+        }
     }
     
     // name      : debug
@@ -88,6 +109,8 @@ function _visualizer() {
          console.log('config', config);
          console.log('dom', dom);
     }
+    
+    
     
        
 }

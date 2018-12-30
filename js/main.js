@@ -21,6 +21,8 @@ function main() {
     
     intfce.make_friends(visualizer);
     
+    visualizer.draw_visualization();
+    
     // add events
     visualizer_set_up.get_setting('audio_element').onplay = function() {
 
